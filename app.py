@@ -3,6 +3,7 @@ import logging
 import os
 from typing import Optional, Tuple
 import time
+import pygame
 
 from groundlight import Groundlight, Detector, ImageQuery
 
@@ -22,6 +23,9 @@ CAMERA_IP = os.getenv("AMC_CAM_CAMERA_IP")
 CAMERA_USERNAME = os.getenv("AMC_CAM_CAMERA_USERNAME")
 DETECTOR = os.getenv("AMC_CAM_DETECTOR")
 
+pygame.mixer.init()
+sound_mixer = pygame.mixer.Sound("media/dog_barking.mp3") # TODO
+
 def env_variables_set():
     return (
         TRIGGER_INTERVAL_S is not None
@@ -31,7 +35,7 @@ def env_variables_set():
 
 def trigger_sound() -> None:
     logger.log("Triggering sound")
-    pass
+    sound_mixer.play()
 
 def get_most_recent_iq(
     detector: Detector,
