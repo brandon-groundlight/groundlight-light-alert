@@ -19,9 +19,7 @@ TRIGGER_INTERVAL_S = (
     if os.getenv("TRIGGER_INTERVAL_S") is not None
     else 3
 )
-CAMERA_IP = os.getenv("AMC_CAM_CAMERA_IP")
-CAMERA_USERNAME = os.getenv("AMC_CAM_CAMERA_USERNAME")
-DETECTOR = os.getenv("AMC_CAM_DETECTOR")
+DETECTOR = os.getenv("SA_DETECTOR")
 
 pygame.mixer.init()
 sound_mixer = pygame.mixer.Sound("media/dog_barking.mp3") # TODO
@@ -29,12 +27,11 @@ sound_mixer = pygame.mixer.Sound("media/dog_barking.mp3") # TODO
 def env_variables_set():
     return (
         TRIGGER_INTERVAL_S is not None
-        and CAMERA_IP is not None
-        and CAMERA_USERNAME is not None
+        and DETECTOR is not None
     )
 
 def trigger_sound() -> None:
-    logger.log("Triggering sound")
+    logger.info("Triggering sound")
     sound_mixer.play()
 
 def get_most_recent_iq(
@@ -54,7 +51,7 @@ def do_loop(
     """A single loop for the server. We see if there's a new image query result and if it's a YES, we start a timer."""
     result = get_most_recent_iq(detector)
     now = time.time()
-    if result.label.value == "YES":
+    if result.result.label == "YES":
         logger.info("Received YES result!")
         if yes_start_time is None:
             logger.info("Starting yes timer....")
@@ -64,6 +61,7 @@ def do_loop(
             logger.info(
                 "Received yes for more than 10 seconds. Triggering sound"
             )
+            # NOTE: We don't time out the sound, it will play until the end
             trigger_sound()
 
     return yes_start_time
@@ -75,7 +73,7 @@ def start_server_loop() -> None:
     try:
         detector = gl.get_detector(DETECTOR)
     except:
-        logger.log("Detector not found, terminating process")
+        logger.info("Detector not found, terminating process")
         exit(1)
 
     # initialize the next time we should run the loop as now
