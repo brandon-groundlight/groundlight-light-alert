@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "groundlight-amcrest-speaker"
+version = "0.1.0"
+description = ""
+authors = ["brandon <brandon@groundlight.ai>"]
+readme = "README.md"
+packages = [{include = "amcrest_speaker"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+groundlight = "^0.18.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

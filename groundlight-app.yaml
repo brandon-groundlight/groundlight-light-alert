@@ -1,0 +1,7 @@
+name: "Amcrest Speaker"
+description: "Connects to your Amcrest camera and plays a sound on the speaker."
+version: "1.0.0"
+runtime:
+  kind: "poetry"
+  working_dir: "."
+entrypoint: poetry run python app.py
