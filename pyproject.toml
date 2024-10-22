@@ -4,7 +4,6 @@ version = "0.1.0"
 description = ""
 authors = ["brandon <brandon@groundlight.ai>"]
 readme = "README.md"
-packages = [{include = "groundlight_sound_alert"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
