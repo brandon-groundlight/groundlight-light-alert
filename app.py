@@ -22,7 +22,7 @@ TRIGGER_INTERVAL_S = (
 DETECTOR = os.getenv("SA_DETECTOR")
 
 pygame.mixer.init()
-sound_mixer = pygame.mixer.Sound("media/dog_barking.mp3") # TODO
+sound_mixer = pygame.mixer.music.load("media/dog_barking.mp3")
 
 def env_variables_set():
     return (
@@ -32,7 +32,7 @@ def env_variables_set():
 
 def trigger_sound() -> None:
     logger.info("Triggering sound")
-    sound_mixer.play()
+    pygame.mixer.music.play()
 
 def get_most_recent_iq(
     detector: Detector,
@@ -51,7 +51,9 @@ def do_loop(
     """A single loop for the server. We see if there's a new image query result and if it's a YES, we start a timer."""
     result = get_most_recent_iq(detector)
     now = time.time()
-    if result.result.label == "YES":
+    logger.info(f"Current time: {now}")
+    logger.info(f"{result=}")
+    if result and result.result.label == "YES":
         logger.info("Received YES result!")
         if yes_start_time is None:
             logger.info("Starting yes timer....")
