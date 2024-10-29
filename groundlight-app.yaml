@@ -1,7 +1,7 @@
-name: "Amcrest Speaker"
-description: "Connects to your Amcrest camera and plays a sound on the speaker."
+name: "Alarm Speaker"
+description: "Connects to your speaker and plays a sound when a detector sees YES."
 version: "1.0.0"
 runtime:
   kind: "poetry"
-  working_dir: "."
+  working_dir: "groundlight-sound-alert"
 entrypoint: poetry run python app.py

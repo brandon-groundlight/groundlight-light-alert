@@ -1,0 +1,7 @@
+version: "2"
+
+services:
+  groundlight-sound-alert:
+    build: ./groundlight-sound-alert
+    privileged: true # Required to access USB devices (e.g. speakers)
+

@@ -14,15 +14,21 @@ gl = Groundlight()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+MAX_DAILY_TRIGGERS = 1
+TIMER = 12
 TRIGGER_INTERVAL_S = (
     int(os.getenv("TRIGGER_INTERVAL_S"))
     if os.getenv("TRIGGER_INTERVAL_S") is not None
-    else 3
+    else 1
 )
 DETECTOR = os.getenv("SA_DETECTOR")
 
-pygame.mixer.init()
-sound_mixer = pygame.mixer.music.load("media/dog_barking.mp3")
+try:
+    # pygame.mixer.init()
+    pygame.mixer.init(buffer=4096, frequency=22050)
+    sound_mixer = pygame.mixer.music.load("media/dog_barking.mp3")
+except Exception as e:
+    logger.error(f"Error initializing pygame: {e}")
 
 def env_variables_set():
     return (
@@ -30,18 +36,35 @@ def env_variables_set():
         and DETECTOR is not None
     )
 
+trigger_times = []
 def trigger_sound() -> None:
-    logger.info("Triggering sound")
-    pygame.mixer.music.play()
+    global trigger_times
+    # count how many times we've triggered in the last day
+    last_day = time.time() - 86400 # seconds in a day
+    recent_times = filter(lambda x: x > last_day, trigger_times)
+    num_triggers = len(recent_times)
+    if num_triggers >= MAX_DAILY_TRIGGERS:
+        logger.info(f"Already triggered {num_triggers} times today. Not triggering sound")
+        return
+    else:
+        trigger_times.append(time.time())
+        logger.info("Triggering sound")
+        try:
+            pygame.mixer.music.play()
+            while pygame.mixer.music.get_busy():
+                pygame.time.Clock().tick(10)
+        except Exception as e:
+            logger.error(f"Error playing sound: {e}")
 
 def get_most_recent_iq(
-    detector: Detector,
+    detector: Detector, num_queries: int = 100
 ) -> None | ImageQuery:
     # TODO Find it or we don't
-    iqs = gl.list_image_queries().results
+    iqs = gl.list_image_queries(page_size=num_queries).results
     for iq in iqs:
         if iq.detector_id == detector.id:
             return iq
+    logger.info(f"No image query found in most recent {num_queries} queries")
     return None
 
 
@@ -52,6 +75,7 @@ def do_loop(
     result = get_most_recent_iq(detector)
     now = time.time()
     logger.info(f"Current time: {now}")
+    print(f"{result=}")
     logger.info(f"{result=}")
     if result and result.result.label == "YES":
         logger.info("Received YES result!")
@@ -59,12 +83,15 @@ def do_loop(
             logger.info("Starting yes timer....")
             yes_start_time = now
 
-        elif now - yes_start_time >= 10: # We alarm if we don't get a no for 10 seconds
+        elif now - yes_start_time >= TIMER: # We alarm if we don't get a no for TIMER seconds
             logger.info(
-                "Received yes for more than 10 seconds. Triggering sound"
+                f"Received yes for more than {TIMER} seconds. Triggering sound"
             )
             # NOTE: We don't time out the sound, it will play until the end
             trigger_sound()
+            yes_start_time = None
+    else:
+        yes_start_time = None
 
     return yes_start_time
 
