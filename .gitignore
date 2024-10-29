@@ -1,2 +1,7 @@
 .venv
 .env
+**temp.py
+
+tinytuya.json
+tuya-raw.json
+snapshot.json

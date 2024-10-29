@@ -1,0 +1,55 @@
+[
+    {
+        "name": "Smart Plug",
+        "id": "1441331570039f339b58",
+        "key": ";ZcAUFxN??6:06k8",
+        "mac": "70:03:9f:33:9b:58",
+        "uuid": "1441331570039f339b58",
+        "category": "cz",
+        "product_name": "Smart Plug",
+        "product_id": "wknflcejjapapwif",
+        "biz_type": 18,
+        "model": "BNC-60/U151T",
+        "sub": false,
+        "icon": "https://images.tuyaus.com/smart/icon/ay1572339180815g4GyW/f9e5dd1d0e2ee060768b8fc5132685b9.png",
+        "mapping": {
+            "1": {
+                "code": "switch_1",
+                "type": "Boolean",
+                "values": {}
+            },
+            "9": {
+                "code": "countdown_1",
+                "type": "Integer",
+                "values": {
+                    "unit": "s",
+                    "min": 0,
+                    "max": 86400,
+                    "scale": 0,
+                    "step": 1
+                }
+            },
+            "38": {
+                "code": "relay_status",
+                "type": "Enum",
+                "values": {
+                    "range": [
+                        "power_off",
+                        "power_on",
+                        "last"
+                    ]
+                }
+            },
+            "41": {
+                "code": "cycle_time",
+                "type": "String",
+                "values": "{}"
+            },
+            "42": {
+                "code": "random_time",
+                "type": "String",
+                "values": "{}"
+            }
+        }
+    }
+]

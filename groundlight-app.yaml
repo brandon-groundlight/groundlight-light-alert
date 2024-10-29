@@ -3,5 +3,5 @@ description: "Connects to your speaker and plays a sound when a detector sees YE
 version: "1.0.0"
 runtime:
   kind: "poetry"
-  working_dir: "groundlight-sound-alert"
-entrypoint: poetry run python groundlight-light-alert/app.py
+  working_dir: "groundlight_light_alert"
+entrypoint: poetry run python groundlight_light_alert/app.py

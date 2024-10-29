@@ -3,46 +3,42 @@ import logging
 import os
 from typing import Optional, Tuple
 import time
-import pygame
 
 from groundlight import Groundlight, Detector, ImageQuery
 
-
+from groundlight_light_alert import device_management as dm
 
 gl = Groundlight()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-MAX_DAILY_TRIGGERS = 1
-TIMER = 12
-TRIGGER_INTERVAL_S = (
-    int(os.getenv("TRIGGER_INTERVAL_S"))
-    if os.getenv("TRIGGER_INTERVAL_S") is not None
+MAX_DAILY_TRIGGERS = int(os.getenv("MAX_DAILY_TRIGGERS")) if os.getenv("MAX_DAILY_TRIGGERS") else 5
+TRIGGER_TIMER = int(os.getenv("TRIGGER_TIMER")) if os.getenv("TRIGGER_TIMER") else 5
+POLLING_TIME_S = (
+    int(os.getenv("POLLING_TIME_S"))
+    if os.getenv("POLLING_TIME_S") is not None
     else 1
 )
-DETECTOR = os.getenv("SA_DETECTOR")
+DETECTOR = os.getenv("DETECTOR")
+SWITCH_ID = os.getenv("SWITCH_ID")
 
-try:
-    # pygame.mixer.init()
-    pygame.mixer.init(buffer=4096, frequency=22050)
-    sound_mixer = pygame.mixer.music.load("media/dog_barking.mp3")
-except Exception as e:
-    logger.error(f"Error initializing pygame: {e}")
+if not POLLING_TIME_S:
+    raise ValueError("POLLING_TIME_S not set")
+if not DETECTOR:
+    raise ValueError("DETECTOR not set")
+if not SWITCH_ID:
+    raise ValueError("SWITCH_ID not set")
 
-def env_variables_set():
-    return (
-        TRIGGER_INTERVAL_S is not None
-        and DETECTOR is not None
-    )
+switch_manager = dm.SwitchManager(SWITCH_ID)
 
 trigger_times = []
 def trigger_sound() -> None:
     global trigger_times
     # count how many times we've triggered in the last day
     last_day = time.time() - 86400 # seconds in a day
-    recent_times = filter(lambda x: x > last_day, trigger_times)
-    num_triggers = len(recent_times)
+    trigger_times = list(filter(lambda x: x > last_day, trigger_times))
+    num_triggers = len(trigger_times)
     if num_triggers >= MAX_DAILY_TRIGGERS:
         logger.info(f"Already triggered {num_triggers} times today. Not triggering sound")
         return
@@ -50,9 +46,7 @@ def trigger_sound() -> None:
         trigger_times.append(time.time())
         logger.info("Triggering sound")
         try:
-            pygame.mixer.music.play()
-            while pygame.mixer.music.get_busy():
-                pygame.time.Clock().tick(10)
+            switch_manager.go_ham()
         except Exception as e:
             logger.error(f"Error playing sound: {e}")
 
@@ -62,7 +56,7 @@ def get_most_recent_iq(
     # TODO Find it or we don't
     iqs = gl.list_image_queries(page_size=num_queries).results
     for iq in iqs:
-        if iq.detector_id == detector.id:
+        if iq.detector_id == detector.id and (iq.result.label == "YES" or iq.result.label == "NO"):
             return iq
     logger.info(f"No image query found in most recent {num_queries} queries")
     return None
@@ -71,7 +65,7 @@ def get_most_recent_iq(
 def do_loop(
     detector: Detector, yes_start_time: Optional[datetime]
 ) -> Tuple[Optional[datetime], bool]:
-    """A single loop for the server. We see if there's a new image query result and if it's a YES, we start a timer."""
+    """A single loop for the server. We see if the most recent image query result is YES and if so we start a timer."""
     result = get_most_recent_iq(detector)
     now = time.time()
     logger.info(f"Current time: {now}")
@@ -83,9 +77,9 @@ def do_loop(
             logger.info("Starting yes timer....")
             yes_start_time = now
 
-        elif now - yes_start_time >= TIMER: # We alarm if we don't get a no for TIMER seconds
+        elif now - yes_start_time >= TRIGGER_TIMER: # We alarm if we don't get a no for TRIGGER_TIMER seconds
             logger.info(
-                f"Received yes for more than {TIMER} seconds. Triggering sound"
+                f"Received yes for more than {TRIGGER_TIMER} seconds. Triggering sound"
             )
             # NOTE: We don't time out the sound, it will play until the end
             trigger_sound()
@@ -111,15 +105,11 @@ def start_server_loop() -> None:
 
     while True:
         now = time.time()
-        if env_variables_set():
-            if now >= next_run_time:
-                yes_start_time = do_loop(
-                    detector, yes_start_time
-                )
-                next_run_time = now + TRIGGER_INTERVAL_S
-        else:
-            logger.info("Environment variables not set. Sleeping....")
-            next_run_time = now + 10
+        if now >= next_run_time:
+            yes_start_time = do_loop(
+                detector, yes_start_time
+            )
+            next_run_time = now + POLLING_TIME_S
         time.sleep(min(1, next_run_time - now))
 
 
