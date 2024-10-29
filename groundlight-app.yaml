@@ -4,4 +4,4 @@ version: "1.0.0"
 runtime:
   kind: "poetry"
   working_dir: "groundlight_light_alert"
-entrypoint: poetry run python groundlight_light_alert/app.py
+entrypoint: ./launch.sh
