@@ -13,6 +13,7 @@ gl = Groundlight()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+CONFIDENCE_THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD")) if os.getenv("CONFIDENCE_THRESHOLD") else 0.8
 MAX_DAILY_TRIGGERS = int(os.getenv("MAX_DAILY_TRIGGERS")) if os.getenv("MAX_DAILY_TRIGGERS") else 5
 TRIGGER_TIMER = int(os.getenv("TRIGGER_TIMER")) if os.getenv("TRIGGER_TIMER") else 5
 POLLING_TIME_S = (
@@ -68,10 +69,9 @@ def do_loop(
     """A single loop for the server. We see if the most recent image query result is YES and if so we start a timer."""
     result = get_most_recent_iq(detector)
     now = time.time()
-    logger.info(f"Current time: {now}")
     print(f"{result=}")
-    logger.info(f"{result=}")
-    if result and result.result.label == "YES":
+    logger.info(f"recieved {result.result.label=}")
+    if result and result.result.label == "YES" and result.confidence_threshold >= CONFIDENCE_THRESHOLD:
         logger.info("Received YES result!")
         if yes_start_time is None:
             logger.info("Starting yes timer....")
