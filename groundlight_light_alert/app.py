@@ -70,8 +70,8 @@ def do_loop(
     result = get_most_recent_iq(detector)
     now = time.time()
     print(f"{result=}")
-    logger.info(f"recieved {result.result.label=}")
     if result and result.result.label == "YES" and result.confidence_threshold >= CONFIDENCE_THRESHOLD:
+        logger.info(f"recieved {result.result.label=}")
         logger.info("Received YES result!")
         if yes_start_time is None:
             logger.info("Starting yes timer....")
